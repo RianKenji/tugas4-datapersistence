@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import './pizza.dart';
 
@@ -25,32 +26,61 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+int appCounter = 1;
+
+
 class _MyHomePageState extends State<MyHomePage> {
   String pizzaString = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('JSON')),
+      appBar: AppBar(title: Text('Shared Preferences')),
       body: Container(
-        child: FutureBuilder(
-            future: readJsonFile(),
-            builder: (BuildContext context, AsyncSnapshot<List<Pizza>>
-            pizzas) {
-              return ListView.builder(
-                  itemCount: (pizzas.data == null) ? 0 :
-                  pizzas.data?.length,
-                  itemBuilder: (BuildContext context, int position) {
-                    return ListTile(
-                        title: Text(pizzas.data![position].pizzaName),
-                        subtitle: Text(pizzas.data![position].description +' - € ' +
-                        pizzas.data![position].price.toString()),
-                    );});}),),
+        child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text(
+                    'You have opened the app ' + appCounter.toString() +
+                        ' times.'),
+                ElevatedButton(
+                  onPressed: () {
+                    deletePreference();
+                  },
+                  child: Text('Reset counter'),
+                )],)),
+      ),
+
     );}
   @override
   void initState() {
     readJsonFile();
+    readAndWritePreference();
     super.initState();
   }
+
+
+  Future readAndWritePreference() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    appCounter = prefs.getInt('appCounter')!;
+    if (appCounter == null) {
+      appCounter = 1;
+    } else {
+      appCounter++;
+    }
+    await prefs.setInt('appCounter', appCounter);
+    setState(() {
+      appCounter = appCounter;
+    });
+  }
+
+  Future deletePreference() async {
+    SharedPreferences prefs = await
+    SharedPreferences.getInstance();
+    await prefs.clear();
+    setState(() {
+      appCounter = 0;
+    });}
 
   Future<List<Pizza>> readJsonFile() async {
       String myString = await DefaultAssetBundle.of(context)
